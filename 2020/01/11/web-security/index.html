@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://www.micjoyce.com').hostname,
+    root: '/',
+    scheme: 'Mist',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"right","Muse | Mist":320,"display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="web 安全是值得每一个做 web 开发的前、后端的开发人员深入研究的一个话题。只有理解可能存在的安全问题，并加以防范，我们才能构建出一个安全的网站服务。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="如何开发一个安全的网站服务">
+<meta property="og:url" content="https://www.micjoyce.com/2020/01/11/web-security/index.html">
+<meta property="og:site_name" content="Micjoyce&#39;s Blog">
+<meta property="og:description" content="web 安全是值得每一个做 web 开发的前、后端的开发人员深入研究的一个话题。只有理解可能存在的安全问题，并加以防范，我们才能构建出一个安全的网站服务。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-01-11T08:51:33.000Z">
+<meta property="article:modified_time" content="2020-11-22T07:09:02.064Z">
+<meta property="article:author" content="Micjoyce">
+<meta property="article:tag" content="web">
+<meta property="article:tag" content="安全">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://www.micjoyce.com/2020/01/11/web-security/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>如何开发一个安全的网站服务 | Micjoyce's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Micjoyce's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.micjoyce.com/2020/01/11/web-security/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/uploads/avatar.png">
+      <meta itemprop="name" content="Micjoyce">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Micjoyce's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          如何开发一个安全的网站服务
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-01-11 16:51:33" itemprop="dateCreated datePublished" datetime="2020-01-11T16:51:33+08:00">2020-01-11</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-11-22 15:09:02" itemprop="dateModified" datetime="2020-11-22T15:09:02+08:00">2020-11-22</time>
+              </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus：</span>
+    
+    <a title="disqus" href="/2020/01/11/web-security/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2020/01/11/web-security/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>web 安全是值得每一个做 web 开发的前、后端的开发人员深入研究的一个话题。只有理解可能存在的安全问题，并加以防范，我们才能构建出一个安全的网站服务。</p>
+<a id="more"></a>
+
+<h2 id="传输安全控制"><a href="#传输安全控制" class="headerlink" title="传输安全控制"></a>传输安全控制</h2><p>web 网站是一个基于 HTTP 协议之上的 B/S 架构软件，客户端与服务端之间的通讯是通过 TCP 建立连接的网络请求实现的，因此数据从服务端传输到客户端，或者从服务端下发数据到客户端时，如果是明文传输就存在<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E4%B8%AD%E9%97%B4%E4%BA%BA%E6%94%BB%E5%87%BB">中间人攻击</a>的风险。因此，我们需要保证我们在传输过程中数据信息是安全的。以下有几个安全规则可以在我们开发中实施。</p>
+<h3 id="HTTPS"><a href="#HTTPS" class="headerlink" title="HTTPS"></a>HTTPS</h3><p>网站后者 API 使用 HTTPS 协议进行传输。我们可以借助 <a target="_blank" rel="noopener" href="https://certbot.eff.org/">let-encrypt</a> 为免费签发 https 证书，然后配置 nginx 即可。</p>
+<h3 id="HTTP-Strict-Transport-Security"><a href="#HTTP-Strict-Transport-Security" class="headerlink" title="HTTP Strict Transport Security"></a>HTTP Strict Transport Security</h3><p>HTTP Strict Transport Security (HSTS) 是一个 HTTP header 配置，它通知浏览器只能通过 HTTPS 连接请求到我们的网站资源获 API。如果存在 HTTP 请求，也会强制转换所有升级到 HTTPS。</p>
+<p>HSTS header 设置由一个强制性的参数(max-age)和两个可选参数( includeSubDomains 和 preload) 用分号分隔组成。</p>
+<ul>
+<li>max-age: 重定向到HTTPS多长时间，以秒为单位</li>
+<li>includeSubDomains: 子域名是否应该升级请求</li>
+<li>preload: 是否包含升级请求本站预加载的请求</li>
+</ul>
+<p>max-age 最小值必须要 6 个月（15768000， 但是建议设置更长的时间，比如两年(63072000)。需要注意的是，当值被设置后，网站必须要在设置的时间断内支持 HTTPS 连接。</p>
+<p>includeSubDomains 通知浏览器，所有子域也升级到 HSTS 发送请求。例如，在 domain.mozilla.com 上设置 includeSubDomains，所有请求到 host1.domain.mozilla.com 或者 host2.domain.mozilla.com 的请求均会主动升级到 HTTPS 请求，这也要求子域名也需要长期支持 HTTPS 请求。</p>
+<p>preload 设置预加载资源升级到 HTTPS 请求。</p>
+<p>示例：</p>
+<blockquote>
+<p>连接到本网站的所有请求升级到 HTTPS 协议</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Strict-Transport-Security: max-age&#x3D;63072000</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>连接到本网站包括子域名及预加载资源均升级到 HTTPS 协议发送请求</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Strict-Transport-Security: max-age&#x3D;63072000; includeSubDomains; preload</span><br></pre></td></tr></table></figure>
+
+<h3 id="HTTP-重定向"><a href="#HTTP-重定向" class="headerlink" title="HTTP 重定向"></a>HTTP 重定向</h3><p>HTTP 默认是监听 80 端口，HTTPS 是 443 端口，我们可以通过 nginx 配置，强制重定向所有 HTTP 请求到 HTTPS。nginx 配置示例如下： </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">server &#123;</span><br><span class="line">  listen 80;</span><br><span class="line"></span><br><span class="line">  return 301 https:&#x2F;&#x2F;$host$request_uri;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="内容安全控制（CSP）"><a href="#内容安全控制（CSP）" class="headerlink" title="内容安全控制（CSP）"></a>内容安全控制（CSP）</h2><p>内容安全控制主要是未来防止跨站脚本攻击及跨站注入攻击。CSP 是一个 HTTP header，允许细粒度的控制资源可以从哪些网站加载。这个头的使用是最好的方法来防止跨站点脚本(XSS)漏洞。</p>
+<p>示例：</p>
+<blockquote>
+<p>禁止不安全的 inline/eval，只允许加载位于 HTTPS 服务的资源(图片、字体、脚本等)<br>只做此配置不能达到 XSS 保护</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy: default-src https:</span><br><span class="line">&lt;!-- 上面配置也可以使用 &lt;meta&gt; 标签配置。 --&gt;</span><br><span class="line">&lt;meta http-equiv&#x3D;&quot;Content-Security-Policy&quot; content&#x3D;&quot;default-src https:&quot;&gt;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>禁用不安全的使用 inline/eval 及插件执行</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy: default-src *; object-src &#39;none&#39;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>禁用不安全的使用 inline/eval 及插件执行，允许图片通源及从 imgur 加载</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy: default-src &#39;self&#39;; img-src &#39;self&#39; https:&#x2F;&#x2F;i.imgur.com; object-src &#39;none&#39;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>禁用不安全安全 inline/eval 和插件加载，只有从同源加载脚本和样式表，从谷歌字体，从同源和 imgur 加载图片。这是值得推荐的做法。</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy: default-src &#39;none&#39;; font-src &#39;https:&#x2F;&#x2F;fonts.googleapis.com&#39;;</span><br><span class="line">			 img-src &#39;self&#39; https:&#x2F;&#x2F;i.imgur.com; object-src &#39;none&#39;; script-src &#39;self&#39;; style-src &#39;self&#39;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>已存在的网站是用来了太多的 inline 来加载资源，但是想要改造为只允许通过 https 加载，并且禁止插件</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy: default-src https: &#39;unsafe-eval&#39; &#39;unsafe-inline&#39;; object-src &#39;none&#39;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>需限制 CSP 策略，只是上报违反规则的资源加载</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy-Report-Only: default-src https:; report-uri &#x2F;csp-violation-report-endpoint&#x2F;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>禁用任何资源和禁用的加载框架,建议使用api</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy: default-src &#39;none&#39;; frame-ancestors &#39;none&#39;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Cookies-安全"><a href="#Cookies-安全" class="headerlink" title="Cookies 安全"></a>Cookies 安全</h2><p>所有 Cookies 都应该尽可能的限制它被访问到，因为 Cookies 通常用来存储一些敏感的信息，限制 Cookies 访问，可以帮助我们减少跨站脚本攻击(XSS)。</p>
+<p>设置 Cookies 注意事项</p>
+<ul>
+<li>Name: Cookies 大部分会采用 __Secure- 或 __Host- 作为前缀，从而避免被不安全的来源重写覆盖了<ul>
+<li>使用 __Host- 前缀设置特定域名的 Cookies，如果不包含子域名 Path 需要设置为 /</li>
+<li>使用 __Secure- 前缀设置允许发送到所有 https 协议下的 Cookies</li>
+</ul>
+</li>
+<li>Secure: 所有cookie必须设置安全标志,表明他们只应该送到HTTPS</li>
+<li>HttpOnly: 如果 Cookies 不允许 javascript 访问，他们应该被这设置为 HttpOnly 标记</li>
+<li>Expiration: 设定过期时间，如果是 session 等会话标示，应该设置尽可能快的过期时间，防止会话泄露<ul>
+<li>Expires: 设置一个 Cookies 到期日期</li>
+<li>Max-Age: 设置一个相对创建多久之后失效的过期时间 (IE8 以下不支持)</li>
+</ul>
+</li>
+<li>Domain: 设置 Cookies 允许随着请求发送到哪些域名，设置应该尽可能严格</li>
+<li>Path: Cookies 应在哪些路径下跟随请求发送，大部分的网站会设置根目录，也就是所有路径均发送</li>
+<li>SameSite: 禁止通过跨源发送 Cookies 请求，例如 <code>&lt;img&gt;</code> 标签实现跨站请求伪造（CSRF）<ul>
+<li>SameSite=Strict: 只发送 Cookies 时直接导航到网站</li>
+<li>SameSite=Lax: 当从另一个网站导航到你的网站时允许发送 Cookies</li>
+</ul>
+</li>
+</ul>
+<p>Cookies 设置示例：</p>
+<blockquote>
+<p>Session 会话标识符 Cookies 仅可在该域名上访问，用户关闭浏览器时被清除</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Set-Cookie: MOZSESSIONID&#x3D;980e5da39d4b472b9f504cac9; Path&#x3D;&#x2F;; Secure; HttpOnly</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>Session 会话标识符的 mozilla.org 网站，在30天内到期使用，并且使用 __Secure- 作为前缀<br>这个 Cookies 不允许跨域访问是携带发送，只允许导航至 mozilla.org 时携带发送</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Set-Cookie: __Secure-MOZSESSIONID&#x3D;7307d70a86bd4ab5a00499762; Max-Age&#x3D;2592000; Domain&#x3D;mozilla.org; Path&#x3D;&#x2F;; Secure; HttpOnly; SameSite&#x3D;Lax</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>当用户接收服务条款时设置一个长久的 cookies 记住用户的行为<br>这个 Cookies 不允许跨域访问是携带发送，只允许导航至 mozilla.org 时携带发送</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Set-Cookie: __Host-ACCEPTEDTOS&#x3D;true; Expires&#x3D;Fri, 31 Dec 9999 23:59:59 GMT; Path&#x3D;&#x2F;; Secure; SameSite&#x3D;Lax</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>用于安全站点的会话标识符，例如 bugzilla.mozilla.org。 它不允许从跨域请求发送，也不允许从另一个站点导航到bugzilla.mozilla.org 时发送。 与其他反 CSRF 措施结合使用，这是保护站点免受CSRF攻击的一种非常有效的方法。</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Set-Cookie: __Host-BMOSESSIONID&#x3D;YnVnemlsbGE&#x3D;; Max-Age&#x3D;2592000; Path&#x3D;&#x2F;; Secure; HttpOnly; SameSite&#x3D;Strict</span><br></pre></td></tr></table></figure>
+
+<h2 id="跨域资源共享"><a href="#跨域资源共享" class="headerlink" title="跨域资源共享"></a>跨域资源共享</h2><p>Access-Control-Allow-Origin 是一个HTTP标头，用于定义允许哪些外部来源通过使用 XMLHttpRequest 之类的脚本通过脚本访问域中页面的内容。 </p>
+<p>示例：</p>
+<blockquote>
+<p>允许任何站点请求你的网站资源</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Access-Control-Allow-Origin: *</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>允许 <a target="_blank" rel="noopener" href="https://random-dashboard.mozilla.org/">https://random-dashboard.mozilla.org</a> 读取此 API 的返回结果，</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Access-Control-Allow-Origin: https:&#x2F;&#x2F;random-dashboard.mozilla.org</span><br></pre></td></tr></table></figure>
+
+<h2 id="CSRF"><a href="#CSRF" class="headerlink" title="CSRF"></a>CSRF</h2><p>跨站点请求伪造（Cross-site request forgeries）是一类攻击。未经授权的请求从受信任的用户发送到网站。因为发送请求会携带用户的 cookie 及存储在 cookie 中的会话信息，所以服务端会把它理解为有效的请求并执行。 CSRF 攻击可能如下所示：</p>
+<p>&lt;!- 尝试删除用户的帐户 -&gt;<br>&lt;img src =“ <a target="_blank" rel="noopener" href="https://accounts.mozilla.org/management/delete?confirm=true%E2%80%9D&gt;">https://accounts.mozilla.org/management/delete?confirm=true”&gt;</a></p>
+<p>当用户访问带有该HTML片段的页面时，浏览器将尝试向该URL发出GET请求。如果用户已登录，浏览器将提供其会话cookie，并且帐户删除尝试将成功。</p>
+<p>阻止 CSRF 攻击有两种方式：</p>
+<ul>
+<li>通过设置 SameSite cookie 来防御，但是并不是所有浏览器都支持，所以不能做到完全安全。</li>
+<li>使用反 CSRF token。token 需要具备唯一且不可预测，切需要定期清除，每次有破坏性的请求是均需要携带上 CSRF token，服务端验证通过之后才执行命令。</li>
+</ul>
+<p>示例：</p>
+<blockquote>
+<p>下发 from 表单是增加一个 hidden input，存储阻止 CSRF token 请求的密匙<br><input type="hidden" name="csrftoken" value="1df93e1eafa42012f9a8aff062eeb1db0380b"></p>
+</blockquote>
+<blockquote>
+<p>服务端设置一个 CSRF cookie</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Set-Cookie: CSRFTOKEN&#x3D;1df93e1eafa42012f9a8aff062eeb1db0380b; Path&#x3D;&#x2F;; Secure; SameSite&#x3D;Strict</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>Client-side, have JavaScript add it as an X header to the<br>客户端如果是通过 XMLHttpRequest 发送的请求则读取 cookies 重的 CSRF tokken 需要携带在 header 中</p>
+</blockquote>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> token = readCookie(CSRFTOKEN);                   <span class="comment">// 读取 CSRF token</span></span><br><span class="line">httpRequest.setRequestHeader(<span class="string">&#x27;X-CSRF-Token&#x27;</span>, token); <span class="comment">// 添加 X-CSRF-Token 到 header</span></span><br></pre></td></tr></table></figure>
+
+
+<h2 id="Referrer-Policy"><a href="#Referrer-Policy" class="headerlink" title="Referrer Policy"></a>Referrer Policy</h2><p>当用户通过超链接导航到站点或网站加载外部资源时，浏览器通过使用HTTP Referer（sic）标头将请求的来源通知目标站点。 尽管这对于多种用途很有用，但也会使用户的隐私受到威胁。 HTTP Referrer Policy允许站点对浏览器如何以及何时传输HTTP Referer标头进行细粒度控制。</p>
+<p>在正常操作中，如果<a target="_blank" rel="noopener" href="https://example.com/page.html%E4%B8%8A%E7%9A%84%E9%A1%B5%E9%9D%A2%E5%8C%85%E5%90%AB%60">https://example.com/page.html上的页面包含`</a>&lt;img src =“ <a target="_blank" rel="noopener" href="https://not.example.com/image.jpg%E2%80%9D&gt;%60%EF%BC%8C%E5%88%99%E6%B5%8F%E8%A7%88%E5%99%A8%E5%B0%86%E5%8F%91%E9%80%81%E8%BF%99%E6%A0%B7%E7%9A%84%E8%AF%B7%E6%B1%82">https://not.example.com/image.jpg”&gt;`，则浏览器将发送这样的请求</a> ：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">GET &#x2F;image.jpg HTTP&#x2F;1.1</span><br><span class="line">Host: not.example.com</span><br><span class="line">Referer: https:&#x2F;&#x2F;example.com&#x2F;page.html</span><br></pre></td></tr></table></figure>
+
+<p>在每次请求中均会携带上 <code>Referer</code> 字段，但是如果请求的资源是外部，但是你不想透露你是从哪里来的请求，则可以通过控制 Referer 来避免来源泄露。<br>设置规则：</p>
+<ul>
+<li>no-referrer: 从不发送 referer</li>
+<li>same-origin: 只在同源请求中携带 referer</li>
+<li>strict-origin: 允许所有请求携带 referer，但是 referer 中不包含子路径 (比如： <a target="_blank" rel="noopener" href="https://example.com/">https://example.com/</a>)</li>
+<li>strict-origin-when-cross-origin: 同源下发送完整路径，不同源不包含自路径</li>
+</ul>
+<p>示例：</p>
+<blockquote>
+<p>在example.com上，仅在加载或链接到其他example.com资源时发送Referer标头</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Referrer-Policy: same-origin</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p> 同源下发送完整路径，不同源不包含自路径</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Referrer-Policy: strict-origin-when-cross-origin</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>浏览器不支持 strict-origin-when-cross-origin 策略时禁止发送 Referer<br>如果支持 strict-origin-when-cross-origin 则使用此策略</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Referrer-Policy: no-referrer, strict-origin-when-cross-origin</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- 通过 meta 标签设置策略 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">meta</span> <span class="attr">http-equiv</span>=<span class="string">&quot;Referrer-Policy&quot;</span> <span class="attr">content</span>=<span class="string">&quot;no-referrer, strict-origin-when-cross-origin&quot;</span>&gt;</span></span><br><span class="line"><span class="comment">&lt;!-- 通过 Dreferrerpolicy 设置超链接规则 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">a</span> <span class="attr">href</span>=<span class="string">&quot;https://mozilla.org/&quot;</span> <span class="attr">referrerpolicy</span>=<span class="string">&quot;no-referrer, strict-origin-when-cross-origin&quot;</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="robots-txt"><a href="#robots-txt" class="headerlink" title="robots.txt"></a>robots.txt</h2><p>robots.txt是放置在网站根目录中的文本文件，通过指示爬虫机器人（例如，搜索引擎使用的索引器）不要对网站上的某些路径进行索引，从而告诉爬虫机器人如何操作。 尽管禁用了自动生成的内容的索引编制功能，这对于减少网站负载特别有用。 对于无法从搜索中受益的资源，这也有助于防止污染搜索结果。<br>网站可以选择使用robots.txt，但仅应将其用于这些目的。 不应将其用作防止泄露私人信息或隐藏网站部分的方法。 尽管这样做确实可以阻止这些网站出现在搜索引擎中，但是它并不能阻止其被攻击者发现，因为robots.txt通常用于侦听。</p>
+<p>示例：</p>
+<blockquote>
+<p>停止所有搜索引擎爬取此站点</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">User-agent: *</span><br><span class="line">Disallow: &#x2F;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>使用 robots.txt 隐藏某些目录</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">User-agent: *</span><br><span class="line">Disallow: &#x2F;secret&#x2F;admin-interface</span><br></pre></td></tr></table></figure>
+
+<h2 id="X-Content-Type-Options"><a href="#X-Content-Type-Options" class="headerlink" title="X-Content-Type-Options"></a>X-Content-Type-Options</h2><p>X-Content-Type-Options是Internet Explorer，Chrome和Firefox 50+支持的标头，告诉标头除非服务器指示正确的MIME类型，否则不要加载脚本和样式表。 如果没有此标头，这些浏览器可能会错误地将文件检测为脚本和样式表，从而导致XSS攻击。 这样，所有站点都必须为其提供的文件设置X-Content-Type-Options标头和适当的MIME类型。</p>
+<p>示例：</p>
+<blockquote>
+<p>Prevent browsers from incorrectly detecting non-scripts as scripts</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">X-Content-Type-Options: nosniff</span><br></pre></td></tr></table></figure>
+
+<h2 id="X-Frame-Options"><a href="#X-Frame-Options" class="headerlink" title="X-Frame-Options"></a>X-Frame-Options</h2><p>X-Frame-Options是一个HTTP标头，可让网站控制您的网站在iframe中的显示方式。 点击劫持(Clickjacking是一种实用的攻击，它使恶意网站可以诱骗用户单击您网站上的链接，即使这些链接似乎根本不在您的网站上。</p>
+<p>请注意，X-Frame-Options已被内容安全政策的frame-ancestors指令所取代，该指令可对允许构架网站的来源进行更精细的控制。由于IE11和更早版本，Edge，Safari 9.1（台式机）和Safari 9.2（iOS）尚不支持帧祖先，因此建议网站除了使用CSP外，还应使用X-Frame-Options。</p>
+<p>配置指令</p>
+<ul>
+<li>DENY: 禁止网站内嵌到 iframe 中</li>
+<li>SAMEORIGIN: 允许内嵌到同源网站中</li>
+<li>ALLOW-FROM uri: 已废弃; 请使用 CSP’s frame-ancestors 设置</li>
+</ul>
+<p>示例：</p>
+<blockquote>
+<p>使用 X-Frame-Options 和 CSP 策略禁止网站内嵌到 iframe 中 </p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy: frame-ancestors &#39;none&#39;</span><br><span class="line">X-Frame-Options: DENY</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>只允许网站自己内嵌到自己的 iframe 中</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy: frame-ancestors &#39;self&#39;</span><br><span class="line">X-Frame-Options: SAMEORIGIN</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>只允许你的网站内嵌到 framer.mozilla.org 这个网站的 iframe 中<br>如果浏览器不支持 CSP2+，你的网站会不被允许内嵌到 framer.mozilla.org 中</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy: frame-ancestors https:&#x2F;&#x2F;framer.mozilla.org</span><br><span class="line">X-Frame-Options: DENY</span><br></pre></td></tr></table></figure>
+
+<h2 id="X-XSS-Protection"><a href="#X-XSS-Protection" class="headerlink" title="X-XSS-Protection"></a>X-XSS-Protection</h2><p>X-XSS-Protection是Internet Explorer和Chrome的一项功能，当页面检测到反射的跨站点脚本（XSS）攻击时，该页面将阻止加载页面。 尽管当站点实施强大的内容安全策略以禁止使用内联JavaScript（“不安全内联”）时，在现代浏览器中这些保护在很大程度上是不必要的，但是它们仍可以为尚不支持CSP的旧版Web浏览器的用户提供保护。 。</p>
+<p>新网站应使用此标头，但由于误报的风险很小，因此仅建议用于现有网站。 对于API而言，此标头不是必需的，而应仅返回一个限制性的“内容安全策略”标头。</p>
+<p>示例： </p>
+<blockquote>
+<p>Block pages from loading when they detect reflected XSS attacks</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">X-XSS-Protection: 1; mode&#x3D;block</span><br></pre></td></tr></table></figure>
+
+<p>参考连接：<br><a target="_blank" rel="noopener" href="https://infosec.mozilla.org/guidelines/web_security#cookies">Mozilla Web Security  Guidelines</a><br><a target="_blank" rel="noopener" href="https://segmentfault.com/a/1190000003860400">nodejs 安全清单</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/web/" rel="tag"># web</a>
+              <a href="/tags/%E5%AE%89%E5%85%A8/" rel="tag"># 安全</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/05/30/http2/" rel="prev" title="理解 HTTP2">
+      <i class="fa fa-chevron-left"></i> 理解 HTTP2
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%A0%E8%BE%93%E5%AE%89%E5%85%A8%E6%8E%A7%E5%88%B6"><span class="nav-number">1.</span> <span class="nav-text">传输安全控制</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#HTTPS"><span class="nav-number">1.1.</span> <span class="nav-text">HTTPS</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HTTP-Strict-Transport-Security"><span class="nav-number">1.2.</span> <span class="nav-text">HTTP Strict Transport Security</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HTTP-%E9%87%8D%E5%AE%9A%E5%90%91"><span class="nav-number">1.3.</span> <span class="nav-text">HTTP 重定向</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%85%E5%AE%B9%E5%AE%89%E5%85%A8%E6%8E%A7%E5%88%B6%EF%BC%88CSP%EF%BC%89"><span class="nav-number">2.</span> <span class="nav-text">内容安全控制（CSP）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Cookies-%E5%AE%89%E5%85%A8"><span class="nav-number">3.</span> <span class="nav-text">Cookies 安全</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B7%A8%E5%9F%9F%E8%B5%84%E6%BA%90%E5%85%B1%E4%BA%AB"><span class="nav-number">4.</span> <span class="nav-text">跨域资源共享</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CSRF"><span class="nav-number">5.</span> <span class="nav-text">CSRF</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Referrer-Policy"><span class="nav-number">6.</span> <span class="nav-text">Referrer Policy</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#robots-txt"><span class="nav-number">7.</span> <span class="nav-text">robots.txt</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#X-Content-Type-Options"><span class="nav-number">8.</span> <span class="nav-text">X-Content-Type-Options</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#X-Frame-Options"><span class="nav-number">9.</span> <span class="nav-text">X-Frame-Options</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#X-XSS-Protection"><span class="nav-number">10.</span> <span class="nav-text">X-XSS-Protection</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Micjoyce"
+      src="/uploads/avatar.png">
+  <p class="site-author-name" itemprop="name">Micjoyce</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">15</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/micjoyce" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;micjoyce" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:micjoyce90@gmail.com" title="E-Mail → mailto:micjoyce90@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://micjoyce.com/" title="https:&#x2F;&#x2F;micjoyce.com" rel="noopener" target="_blank">Title</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Micjoyce</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://micjoyce.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: {page: {
+            url: "https://www.micjoyce.com/2020/01/11/web-security/",
+            identifier: "2020/01/11/web-security/",
+            title: "如何开发一个安全的网站服务"
+          }
+        }
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://micjoyce.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+</body>
+</html>
